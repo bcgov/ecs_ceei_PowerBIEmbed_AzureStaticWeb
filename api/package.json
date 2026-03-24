@@ -1,0 +1,11 @@
+{
+  "name": "powerbi-embed-api",
+  "version": "1.0.0",
+  "description": "API for Power BI Embedding",
+  "scripts": {
+    "start": "func start"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}
