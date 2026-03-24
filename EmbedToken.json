@@ -1,0 +1,303 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "type": "String",
+      "metadata": {
+        "description": "Name of the logic app."
+      }
+    },
+    "logicAppLocation": {
+      "defaultValue": "[resourceGroup().location]",
+      "allowedValues": [
+        "eastasia",
+        "southeastasia",
+        "centralus",
+        "eastus",
+        "eastus2",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "westeurope",
+        "japanwest",
+        "japaneast",
+        "brazilsouth",
+        "australiaeast",
+        "australiasoutheast",
+        "southindia",
+        "centralindia",
+        "westindia",
+        "canadacentral",
+        "canadaeast",
+        "westcentralus",
+        "westus2",
+        "[resourceGroup().location]"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "Location of the logic app."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('logicAppName')]",
+      "location": "[parameters('logicAppLocation')]",
+      "properties": {
+        "state": "Disabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$authentication": {
+              "defaultValue": {},
+              "type": "SecureObject"
+            }
+          },
+          "triggers": {
+            "manual": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "groupid": {
+                      "type": "string"
+                    },
+                    "reportid": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "method": "POST"
+              }
+            }
+          },
+          "actions": {
+            "HTTP_2": {
+              "runAfter": {
+                "requestBody": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "https://login.windows.net/common/oauth2/token",
+                "headers": {
+                  "Content-Type": "application/x-www-form-urlencoded"
+                },
+                "body": "@outputs('requestBody')"
+              }
+            },
+            "Response": {
+              "runAfter": {
+                "Parse_JSON_2": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Response",
+              "kind": "Http",
+              "inputs": {
+                "statusCode": 200,
+                "body": "@body('HTTP')"
+              }
+            },
+            "Parse_JSON": {
+              "runAfter": {
+                "HTTP_2": [
+                  "Succeeded"
+                ]
+              },
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('HTTP_2')",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token_type": {
+                      "type": "string"
+                    },
+                    "scope": {
+                      "type": "string"
+                    },
+                    "expires_in": {
+                      "type": "string"
+                    },
+                    "ext_expires_in": {
+                      "type": "string"
+                    },
+                    "expires_on": {
+                      "type": "string"
+                    },
+                    "not_before": {
+                      "type": "string"
+                    },
+                    "resource": {
+                      "type": "string"
+                    },
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "refresh_token": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "HTTP": {
+              "runAfter": {
+                "Parse_JSON": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "https://api.powerbi.com/v1.0/myorg/groups/@{triggerBody()?['groupid']}/reports/@{triggerBody()?['reportid']}/GenerateToken",
+                "headers": {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                  "Authorization": "Bearer @{body('Parse_JSON')?['access_token']}"
+                },
+                "body": {
+                  "accessLevel": "View",
+                  "allowSaveAs": "false"
+                }
+              }
+            },
+            "Parse_JSON_2": {
+              "runAfter": {
+                "HTTP": [
+                  "Succeeded"
+                ]
+              },
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('HTTP')",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "@@odata.context": {
+                      "type": "string"
+                    },
+                    "token": {
+                      "type": "string"
+                    },
+                    "tokenId": {
+                      "type": "string"
+                    },
+                    "expiration": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "clientId": {
+              "runAfter": {},
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "clientId",
+                    "type": "string",
+                    "value": "clientId"
+                  }
+                ]
+              }
+            },
+            "clientSecret": {
+              "runAfter": {
+                "clientId": [
+                  "Succeeded"
+                ]
+              },
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "clientSecret",
+                    "type": "string",
+                    "value": "clientSecret"
+                  }
+                ]
+              }
+            },
+            "username": {
+              "runAfter": {
+                "clientSecret": [
+                  "Succeeded"
+                ]
+              },
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "username",
+                    "type": "string",
+                    "value": "emailaddress"
+                  }
+                ]
+              }
+            },
+            "password": {
+              "runAfter": {
+                "username": [
+                  "Succeeded"
+                ]
+              },
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "password",
+                    "type": "string",
+                    "value": "password1!"
+                  }
+                ]
+              }
+            },
+            "requestBody": {
+              "runAfter": {
+                "password": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "client_id=@{variables('clientId')}&grant_type=password&resource=https://analysis.windows.net/powerbi/api&username=@{variables('username')}&password=@{variables('password')}&client_secret=@{variables('clientSecret')}"
+            }
+          },
+          "outputs": {}
+        },
+        "parameters": {},
+        "runtimeConfiguration": {
+          "lifetime": {
+            "unit": "Day",
+            "count": 366
+          },
+          "collections": {
+            "maximumItemCount": 100000
+          },
+          "performanceProfile": {
+            "throttles": {
+              "mode": "Low"
+            }
+          },
+          "retryPolicy": {
+            "type": "Exponential",
+            "interval": "PT5M",
+            "count": 2,
+            "minimumInterval": "PT5M",
+            "maximumInterval": "PT1H"
+          }
+        }
+      }
+    }
+  ]
+}
