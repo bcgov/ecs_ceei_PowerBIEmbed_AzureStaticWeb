@@ -6,12 +6,12 @@ const MS_FLOW_URL = "/api/generateToken";
 // Dictionary of available reports mapping a friendly name to their IDs
 const REPORTS = {
     lgcap: {
-        groupId: "09a7f57f-a3f2-4571-9a88-f6637406685a", // Replace with LGCAP Group ID
-        reportId: "3e2def4d-bbbb-48b8-b4be-b7d1cea33c24"  // Replace with LGCAP Report ID
+        groupId: <your lgcap workspace id>, // Replace with LGCAP Group ID
+        reportId: <your lgcap report id>  // Replace with LGCAP Report ID
     },
     ceei: {
-        groupId: "09a7f57f-a3f2-4571-9a88-f6637406685a", // Replace with CEEI Group ID
-        reportId: "fda20a6d-87c0-48e3-9989-d8f17404499a"  // Replace with CEEI Report ID
+        groupId: <your ceei workspace id>, // Replace with CEEI Group ID
+        reportId: <your ceei report id>  // Replace with CEEI Report ID
     }
 };
 
