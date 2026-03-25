@@ -27,6 +27,9 @@ CLIENT_SECRET=Your App Secret
 ```
 
 ### 2. Configure the Frontend
+Open `app.js` and replace the configuration variables:
+- `EMBED_GROUP_ID`: Your Power BI Workspace ID.
+- `EMBED_REPORT_ID`: Your Power BI Report ID.
 Open `public/app.js` and ensure it points to the correct endpoint:
 - `MS_FLOW_URL`: Set to `/api/generateToken`
 
